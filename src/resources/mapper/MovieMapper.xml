@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ureca.movie.model.dao.MovieDao">
+
+    <!--
+        Movie DTO 프로퍼티가 이미 DB 컬럼명과 동일(snake_case)하므로
+        JOIN으로 가져오는 start_time 포함하여 명시적으로 선언
+    -->
+    <resultMap id="movieMap" type="com.ureca.dto.Movie">
+        <id     column="movie_id"   property="movie_id"/>
+        <result column="movie_name" property="movie_name"/>
+        <result column="air_date"   property="air_date"/>
+        <result column="end_date"   property="end_date"/>
+        <result column="movie_time" property="movie_time"/>
+        <result column="hall_id"    property="hall_id"/>
+        <result column="start_time" property="start_time"/>
+    </resultMap>
+
+    <!-- ======================== INSERT ======================== -->
+
+    <!--
+        end_date, movie_time 기본값 처리는 서비스/DAO 구현체에서 담당
+        (end_date가 null이면 air_date 사용, movie_time이 0이면 120 사용)
+    -->
+    <insert id="add" parameterType="com.ureca.dto.Movie">
+        INSERT INTO movie(movie_id, movie_name, air_date, end_date, movie_time, hall_id)
+        VALUES(#{movie_id}, #{movie_name}, #{air_date}, #{end_date}, #{movie_time}, #{hall_id})
+    </insert>
+
+    <!-- ======================== UPDATE ======================== -->
+
+    <update id="update" parameterType="com.ureca.dto.Movie">
+        UPDATE movie
+        SET movie_name = #{movie_name},
+            air_date   = #{air_date},
+            end_date   = #{end_date},
+            movie_time = #{movie_time},
+            hall_id    = #{hall_id}
+        WHERE movie_id = #{movie_id}
+    </update>
+
+    <!--
+        remove 트랜잭션 step 1:
+        movie 삭제 전 hall 테이블의 movie_id 참조를 NULL로 처리
+        DAO 구현체에서 remove(int id) 호출 시
+        이 statement를 먼저 실행한 뒤 아래 remove를 실행해야 함
+    -->
+    <update id="clearHallMovieRef" parameterType="int">
+        UPDATE hall
+        SET    movie_id = NULL
+        WHERE  movie_id = #{id}
+    </update>
+
+    <!-- ======================== DELETE ======================== -->
+
+    <!-- remove 트랜잭션 step 2: movie 행 삭제 -->
+    <delete id="remove" parameterType="int">
+        DELETE FROM movie
+        WHERE  movie_id = #{id}
+    </delete>
+
+    <!-- ======================== SELECT ======================== -->
+
+    <!--
+        hall 테이블과 LEFT JOIN하여 해당 영화의 최소 상영 시작 시간(start_time)을 함께 조회
+    -->
+    <select id="search" parameterType="int" resultMap="movieMap">
+        SELECT m.movie_id,
+               m.movie_name,
+               m.air_date,
+               m.end_date,
+               m.movie_time,
+               m.hall_id,
+               MIN(h.start_time) AS start_time
+        FROM   movie m
+               LEFT JOIN hall h
+                      ON m.hall_id  = h.hall_id
+                     AND h.movie_id = m.movie_id
+        WHERE  m.movie_id = #{id}
+        GROUP  BY m.movie_id, m.movie_name, m.air_date, m.end_date, m.movie_time, m.hall_id
+    </select>
+
+    <select id="searchAll" resultMap="movieMap">
+        SELECT m.movie_id,
+               m.movie_name,
+               m.air_date,
+               m.end_date,
+               m.movie_time,
+               m.hall_id,
+               MIN(h.start_time) AS start_time
+        FROM   movie m
+               LEFT JOIN hall h
+                      ON m.hall_id  = h.hall_id
+                     AND h.movie_id = m.movie_id
+        GROUP  BY m.movie_id, m.movie_name, m.air_date, m.end_date, m.movie_time, m.hall_id
+        ORDER  BY m.movie_id
+    </select>
+
+</mapper>

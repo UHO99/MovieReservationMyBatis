@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ureca.user.model.dao.UserDao">
+
+    <!--
+        DB 컬럼 ↔ User DTO 프로퍼티 매핑
+          user_id   → id   (컬럼명과 프로퍼티명이 다름)
+          user_name → name (컬럼명과 프로퍼티명이 다름)
+          grade     → grade (char)
+              - DB에 "admin" 문자열로 저장된 경우 CASE로 'a'로 변환하여
+                MyBatis CharacterTypeHandler가 char로 처리하도록 유도
+    -->
+    <resultMap id="userMap" type="com.ureca.dto.User">
+        <id     column="user_id"   property="id"/>
+        <result column="user_name" property="name"/>
+        <result column="grade"     property="grade"/>
+    </resultMap>
+
+    <!-- ======================== INSERT ======================== -->
+
+    <!--
+        grade 저장 규칙: admin 계정이면 "admin" 문자열, 일반 사용자면 grade 단일 문자
+        User.getGradeLabel() → isAdmin() ? "admin" : String.valueOf(grade)
+        를 그대로 활용
+    -->
+    <insert id="add" parameterType="com.ureca.dto.User">
+        INSERT INTO user(user_id, user_name, grade)
+        VALUES(#{id}, #{name}, #{gradeLabel})
+    </insert>
+
+    <!-- ======================== UPDATE ======================== -->
+
+    <update id="update" parameterType="com.ureca.dto.User">
+        UPDATE user
+        SET user_name = #{name},
+            grade     = #{gradeLabel}
+        WHERE user_id = #{id}
+    </update>
+
+    <!-- ======================== DELETE ======================== -->
+
+    <delete id="remove" parameterType="int">
+        DELETE FROM user
+        WHERE  user_id = #{id}
+    </delete>
+
+    <!-- ======================== SELECT ======================== -->
+
+    <!--
+        grade 읽기 규칙:
+          DB 값 "admin" → CASE로 'a'로 변환 → MyBatis가 char 'a'로 세팅
+          DB 값 단일 문자 → 그대로 → MyBatis가 char로 세팅
+        (원본 applyGrade() 로직과 동일한 결과)
+    -->
+    <select id="search" parameterType="int" resultMap="userMap">
+        SELECT user_id,
+               user_name,
+               CASE WHEN grade = 'admin' THEN 'a' ELSE grade END AS grade
+        FROM   user
+        WHERE  user_id = #{id}
+    </select>
+
+    <select id="searchAll" resultMap="userMap">
+        SELECT user_id,
+               user_name,
+               CASE WHEN grade = 'admin' THEN 'a' ELSE grade END AS grade
+        FROM   user
+    </select>
+
+</mapper>

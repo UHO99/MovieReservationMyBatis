@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ureca.reservation.model.dao.ReservationDao">
+
+    <!--
+        Reservation DTO 프로퍼티명이 DB 컬럼명과 동일(snake_case)하여
+        별도 이름 변환 없이 resultMap 선언
+    -->
+    <resultMap id="reservationMap" type="com.ureca.dto.Reservation">
+        <id     column="reservation_id" property="reservation_id"/>
+        <result column="seat_id"        property="seat_id"/>
+        <result column="user_id"        property="user_id"/>
+        <result column="movie_id"       property="movie_id"/>
+        <result column="hall_id"        property="hall_id"/>
+        <result column="start_datetime" property="start_datetime"/>
+    </resultMap>
+
+    <!-- ======================== INSERT ======================== -->
+
+    <insert id="add" parameterType="com.ureca.dto.Reservation">
+        INSERT INTO reservation(reservation_id, seat_id, user_id, movie_id, hall_id, start_datetime)
+        VALUES(#{reservation_id}, #{seat_id}, #{user_id}, #{movie_id}, #{hall_id}, #{start_datetime})
+    </insert>
+
+    <!-- ======================== UPDATE ======================== -->
+
+    <update id="update" parameterType="com.ureca.dto.Reservation">
+        UPDATE reservation
+        SET seat_id        = #{seat_id},
+            user_id        = #{user_id},
+            movie_id       = #{movie_id},
+            hall_id        = #{hall_id},
+            start_datetime = #{start_datetime}
+        WHERE reservation_id = #{reservation_id}
+    </update>
+
+    <!-- ======================== DELETE ======================== -->
+
+    <delete id="remove" parameterType="int">
+        DELETE FROM reservation
+        WHERE  reservation_id = #{reservationId}
+    </delete>
+
+    <!-- ======================== SELECT ======================== -->
+
+    <select id="search" parameterType="int" resultMap="reservationMap">
+        SELECT reservation_id, seat_id, user_id, movie_id, hall_id, start_datetime
+        FROM   reservation
+        WHERE  reservation_id = #{reservationId}
+    </select>
+
+    <select id="searchAll" resultMap="reservationMap">
+        SELECT reservation_id, seat_id, user_id, movie_id, hall_id, start_datetime
+        FROM   reservation
+        ORDER  BY reservation_id
+    </select>
+
+    <select id="searchByMovie" parameterType="int" resultMap="reservationMap">
+        SELECT reservation_id, seat_id, user_id, movie_id, hall_id, start_datetime
+        FROM   reservation
+        WHERE  movie_id = #{movieId}
+    </select>
+
+    <select id="searchByUserId" parameterType="int" resultMap="reservationMap">
+        SELECT reservation_id, seat_id, user_id, movie_id, hall_id, start_datetime
+        FROM   reservation
+        WHERE  user_id = #{userId}
+        ORDER  BY reservation_id
+    </select>
+
+    <!--
+        isSeatTaken(int movieId, int seatId)
+        다중 파라미터: param1 = movieId, param2 = seatId
+        SELECT COUNT(*) → boolean 자동 변환 (0 = false, 1이상 = true)
+    -->
+    <select id="isSeatTaken" resultType="boolean">
+        SELECT COUNT(*)
+        FROM   reservation
+        WHERE  movie_id = #{param1}
+          AND  seat_id  = #{param2}
+        LIMIT  1
+    </select>
+
+    <!--
+        isSeatTaken(int movieId, int hallId, Timestamp startDatetime, int seatId) 오버로딩 버전
+        XML ID는 유일해야 하므로 isSeatTakenBySchedule로 분리
+        DAO 구현체에서 4-파라미터 isSeatTaken() 호출 시 이 ID를 사용
+        다중 파라미터: param1 = movieId, param2 = hallId,
+                       param3 = startDatetime, param4 = seatId
+    -->
+    <select id="isSeatTakenBySchedule" resultType="boolean">
+        SELECT COUNT(*)
+        FROM   reservation
+        WHERE  movie_id       = #{param1}
+          AND  hall_id        = #{param2}
+          AND  start_datetime = #{param3}
+          AND  seat_id        = #{param4}
+        LIMIT  1
+    </select>
+
+    <!-- ======================== 유틸 ======================== -->
+
+    <select id="nextReservationId" resultType="int">
+        SELECT COALESCE(MAX(reservation_id), 0) + 1
+        FROM   reservation
+    </select>
+
+</mapper>

@@ -1,0 +1,51 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>MovieReservationMyBatis</groupId>
+  <artifactId>MovieReservationMyBatis</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <!-- Maven Project 이름 => Project 이름으로 배포 -->
+  <name>MovieReservationMyBatis</name>
+  <description>MovieReservationMyBatis</description>
+  
+  	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.release>21</maven.compiler.release>
+		<mybatis.version>3.5.19</mybatis.version>
+		<mysql.version>8.0.33</mysql.version>
+	</properties>
+
+	<!-- 의존 lib 설정 -->
+	<dependencies>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>${mybatis.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>${mysql.version}</version>
+		</dependency>
+	</dependencies>
+	
+  <build>
+  
+    <sourceDirectory>src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/resources</directory>
+      </resource>
+    </resources>
+    
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>21</release>
+        </configuration>
+      </plugin>
+    </plugins>
+    
+  </build>
+</project>

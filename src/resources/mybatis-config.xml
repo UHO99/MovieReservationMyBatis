@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<package name="com.ureca.dto.User"/>
+		<package name="com.ureca.dto.Movie"/>
+		<package name="com.ureca.dto.Reservation"/>
+		<package name="com.ureca.dto.Hall"/>
+	</typeAliases>
+
+	<environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC"/>
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+				<property name="url" value="jdbc:mysql://localhost:3308/moviedb?serverTimezone=UTC&amp;useUnicode=yes&amp;characterEncoding=UTF-8&amp;useSSL=false&amp;allowPublicKeyRetrieval=true"/>
+				<property name="username" value="ureca"/>
+				<property name="password" value="ureca"/>
+			</dataSource>
+		</environment>
+	</environments>
+	
+	<mappers>
+		<mapper resource="mapper/UserMapper.xml"/>
+		<mapper resource="mapper/MovieMapper.xml"/>
+		<mapper resource="mapper/ReservationMapper.xml"/>
+		<mapper resource="mapper/HallMapper.xml"/>
+	</mappers>
+</configuration>

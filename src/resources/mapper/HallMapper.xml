@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ureca.hall.model.dao.HallDao">
+
+    <!--
+        DB 컬럼(snake_case) ↔ Java 프로퍼티(camelCase) 매핑
+    -->
+    <resultMap id="hallMap" type="com.ureca.dto.Hall">
+        <id     column="hall_id"        property="hallId"/>
+        <result column="seat_id"        property="seatId"/>
+        <result column="seat_count"     property="seatCount"/>
+        <result column="movie_time"     property="movieTime"/>
+        <result column="start_time"     property="startTime"/>
+        <result column="movie_id"       property="movieId"/>
+        <result column="today_show_cnt" property="todayShowCnt"/>
+    </resultMap>
+
+    <!-- ======================== INSERT ======================== -->
+
+    <insert id="add" parameterType="com.ureca.dto.Hall">
+        INSERT INTO hall(hall_id, seat_id, seat_count, movie_time, start_time, movie_id, today_show_cnt)
+        VALUES(#{hallId}, #{seatId}, #{seatCount}, #{movieTime}, #{startTime}, #{movieId}, #{todayShowCnt})
+    </insert>
+
+    <!-- ======================== UPDATE ======================== -->
+
+    <update id="update" parameterType="com.ureca.dto.Hall">
+        UPDATE hall
+        SET seat_count     = #{seatCount},
+            movie_time     = #{movieTime},
+            start_time     = #{startTime},
+            movie_id       = #{movieId},
+            today_show_cnt = #{todayShowCnt}
+        WHERE hall_id = #{hallId}
+          AND seat_id = #{seatId}
+    </update>
+
+    <!--
+        remove 트랜잭션 step 1:
+        hall 삭제 전 movie 테이블의 hall_id 참조를 NULL로 처리
+        DAO 구현체에서 remove(int hallId, int seatId) 호출 시
+        이 statement를 먼저 실행한 뒤 아래 remove를 실행해야 함
+        파라미터 이름: @Param("hallId") 또는 param1 사용
+    -->
+    <update id="clearMovieHallRef" parameterType="int">
+        UPDATE movie
+        SET    hall_id = NULL
+        WHERE  hall_id = #{hallId}
+    </update>
+
+    <!-- ======================== DELETE ======================== -->
+
+    <!--
+        remove 트랜잭션 step 2: hall 행 삭제
+        다중 파라미터 → @Param("hallId"), @Param("seatId") 또는 param1/param2 사용
+    -->
+    <delete id="remove">
+        DELETE FROM hall
+        WHERE  hall_id = #{param1}
+          AND  seat_id = #{param2}
+    </delete>
+
+    <!-- ======================== SELECT ======================== -->
+
+    <!--
+        다중 파라미터 → @Param("hallId"), @Param("seatId") 또는 param1/param2 사용
+    -->
+    <select id="search" resultMap="hallMap">
+        SELECT hall_id, seat_id, seat_count, movie_time, start_time, movie_id, today_show_cnt
+        FROM   hall
+        WHERE  hall_id = #{param1}
+          AND  seat_id = #{param2}
+    </select>
+
+    <select id="searchByHallId" parameterType="int" resultMap="hallMap">
+        SELECT hall_id, seat_id, seat_count, movie_time, start_time, movie_id, today_show_cnt
+        FROM   hall
+        WHERE  hall_id = #{hallId}
+        ORDER BY seat_id
+    </select>
+
+    <!--
+        다중 파라미터 순서: (int movieId, int hallId)
+        param1 = movieId, param2 = hallId
+    -->
+    <select id="searchByMovieAndHall" resultMap="hallMap">
+        SELECT hall_id, seat_id, seat_count, movie_time, start_time, movie_id, today_show_cnt
+        FROM   hall
+        WHERE  movie_id = #{param1}
+          AND  hall_id  = #{param2}
+        ORDER BY start_time, seat_id
+    </select>
+
+    <select id="searchAll" resultMap="hallMap">
+        SELECT hall_id, seat_id, seat_count, movie_time, start_time, movie_id, today_show_cnt
+        FROM   hall
+        ORDER BY hall_id, seat_id
+    </select>
+
+</mapper>
